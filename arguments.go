@@ -123,8 +123,7 @@ func GetUnnamed(index int) string {
 
 // GetNamedAs takes an arguments short and long name and a default value of type T, and returns the
 // value of the argument as type T. If the argument is not present, the default value is returned.
-// If the type is a boolean and the default value is true, then only "false" and "0" are considered
-// false. If the default value is false, then only "true" and "1" are considered true.
+// If the type is a boolean then only "false" or "0" are considered false.
 // If options are provided, the value is checked to ensure it is within the range of the
 // options. If the value is not within the range, it is clamped to the closest value that
 // is within the range. (Only for integers and floats)
@@ -135,9 +134,7 @@ func GetNamedAs[T any](short, long string, def T, options ...Options[T]) T {
 // GetUnnamedAs takes an index and a default value of type T, and returns the value of the
 // unnamed argument at that index as type T. If the argument is not present, the default
 // value is returned.
-// If the type is a boolean and the default value is true, then only "false" and "0" are
-// considered false. If the default value is false, then only "true" and "1" are considered
-// true.
+// If the type is a boolean then only "false" or "0" are considered false.
 // If options are provided, the value is checked to ensure it is within the range of the
 // options. If the value is not within the range, it is clamped to the closest value that
 // is within the range. (Only for integers and floats)

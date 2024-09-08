@@ -34,13 +34,7 @@ func convert[T any](a argument, def T, options ...Options[T]) T {
 	case []byte:
 		return any([]byte(a.value)).(T)
 	case bool:
-		// If default is true, then only false and 0 are considered false
-		if any(def).(bool) {
-			return any(a.value != "false" && a.value != "0").(T)
-		}
-
-		// If default is false, then only true and 1 are considered true
-		return any(a.value == "true" || a.value == "1").(T)
+		return any(a.value != "false" && a.value != "0").(T)
 	case int64, int32, int16, int8, int:
 		i, err := strconv.ParseInt(a.value, 10, 64)
 		if err != nil {
