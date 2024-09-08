@@ -10,10 +10,14 @@ var (
 	noName    []argument
 )
 
-// I don't like golang flags package
-func init() {
+func Parse(booleans ...string) {
 	arguments = make(map[string]argument)
 	noName = make([]argument, 0)
+
+	isBool := make(map[string]bool)
+	for _, b := range booleans {
+		isBool[b] = true
+	}
 
 	var (
 		arg   string
@@ -46,6 +50,12 @@ func init() {
 				name = ""
 			} else {
 				name = arg[1:]
+
+				if _, ok := isBool[name]; ok {
+					arguments[name] = argument{}
+
+					name = ""
+				}
 			}
 		} else {
 			if name == "" {
