@@ -1,6 +1,8 @@
 package arguments
 
-func minmax[T int | int64 | uint64 | float64](val T, options ...Options[T]) T {
+import "golang.org/x/exp/constraints"
+
+func minmax[T constraints.Integer | constraints.Float](val T, options ...Options[T]) T {
 	// No options means we don't need to do anything
 	if len(options) == 0 {
 		return val

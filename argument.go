@@ -1,108 +1,68 @@
 package arguments
 
-import "strconv"
+import (
+	"errors"
+	"strconv"
+)
 
 type Argument struct {
-	name string
-
-	IsNil bool
-	Value string
+	isNil bool
+	value string
 }
 
-type Options[V int | int64 | uint64 | float64] struct {
-	Min V
-	Max V
+type Options[T any] struct {
+	Min T
+	Max T
 }
 
-// IsSet returns true if the argument is set, false otherwise.
-// It is set if it exists in the command line arguments even if it has no value.
-func (a Argument) IsSet() bool {
-	return !a.IsNil
-}
+func convert[T any](a Argument, def T, options ...Options[T]) (T, error) {
+	var value T
 
-// String returns the value of the argument if set, otherwise the default value.
-func (a Argument) String(def string) string {
-	if a.IsNil {
-		return def
+	if a.isNil {
+		return def, nil
 	}
 
-	return a.Value
-}
+	var option Options[T]
 
-// Bool returns the value of the argument as a boolean if set, otherwise the default value.
-// The value is considered true if it is not "false" or "0".
-func (a Argument) Bool(def bool) bool {
-	if a.IsNil {
-		return def
+	if len(options) > 0 {
+		option = options[0]
 	}
 
-	if a.Value == "false" || a.Value == "0" {
-		return false
+	switch any(value).(type) {
+	case string:
+		return any(a.value).(T), nil
+	case []byte:
+		return any([]byte(a.value)).(T), nil
+	case bool:
+		// If default is true, then only false and 0 are considered false
+		if any(def).(bool) {
+			return any(a.value != "false" && a.value != "0").(T), nil
+		}
+
+		// If default is false, then only true and 1 are considered true
+		return any(a.value == "true" || a.value == "1").(T), nil
+	case int64, int32, int16, int8, int:
+		i, err := strconv.ParseInt(a.value, 10, 64)
+		if err != nil {
+			return def, err
+		}
+
+		return any(minmax(i, any(option).(Options[int64]))).(T), nil
+	case uint64, uint32, uint16, uint8, uint, uintptr:
+		i, err := strconv.ParseUint(a.value, 10, 64)
+		if err != nil {
+			return def, err
+		}
+
+		return any(minmax(i, any(option).(Options[uint64]))).(T), nil
+	case float64, float32:
+		i, err := strconv.ParseFloat(a.value, 64)
+		if err != nil {
+			return def, err
+		}
+
+		return any(minmax(i, any(option).(Options[float64]))).(T), nil
 	}
 
-	return true
-}
-
-// Int returns the value of the argument as an int if set, otherwise the default value.
-// If the value is not an integer (can't be parsed as an int), the default value is returned.
-// If any options are given, the value is clamped to the options' range.
-func (a Argument) Int(def int, options ...Options[int]) int {
-	if a.IsNil {
-		return def
-	}
-
-	i, err := strconv.Atoi(a.Value)
-	if err != nil {
-		return def
-	}
-
-	return minmax(i, options...)
-}
-
-// Int64 returns the value of the argument as an int64 if set, otherwise the default value.
-// If the value is not an integer (can't be parsed as an int64), the default value is returned.
-// If any options are given, the value is clamped to the options' range.
-func (a Argument) Int64(def int64, options ...Options[int64]) int64 {
-	if a.IsNil {
-		return def
-	}
-
-	i, err := strconv.ParseInt(a.Value, 10, 64)
-	if err != nil {
-		return def
-	}
-
-	return minmax(i, options...)
-}
-
-// Uint64 returns the value of the argument as a uint64 if set, otherwise the default value.
-// If the value is not an unsigned integer (can't be parsed as a uint64), the default value is returned.
-// If any options are given, the value is clamped to the options' range.
-func (a Argument) Uint64(def uint64, options ...Options[uint64]) uint64 {
-	if a.IsNil {
-		return def
-	}
-
-	i, err := strconv.ParseUint(a.Value, 10, 64)
-	if err != nil {
-		return def
-	}
-
-	return minmax(i, options...)
-}
-
-// Float64 returns the value of the argument as a float64 if set, otherwise the default value.
-// If the value is not a floating point number (can't be parsed as a float64), the default value is returned.
-// If any options are given, the value is clamped to the options' range.
-func (a Argument) Float64(def float64, options ...Options[float64]) float64 {
-	if a.IsNil {
-		return def
-	}
-
-	i, err := strconv.ParseFloat(a.Value, 64)
-	if err != nil {
-		return def
-	}
-
-	return minmax(i, options...)
+	return value, errors.New("invalid type")
 }

@@ -5,26 +5,19 @@ import (
 	"strings"
 )
 
-type Arguments struct {
-	Arguments map[string]Argument
-}
-
 var (
-	arguments Arguments
+	arguments map[string]Argument
 )
 
 // I don't like golang flags package
 func init() {
-	arguments = Arguments{
-		Arguments: make(map[string]Argument),
-	}
+	arguments = make(map[string]Argument)
 
 	var (
 		arg   string
+		name  string
 		val   string
 		index int
-
-		current Argument
 	)
 
 	for i := 1; i < len(os.Args); i++ {
@@ -41,80 +34,68 @@ func init() {
 						val = arg[2+index+1:]
 					}
 
-					arguments.set(Argument{
-						name:  arg[2 : 2+index],
-						Value: val,
-					})
+					arguments[arg[2:2+index]] = Argument{
+						value: val,
+					}
 				} else {
-					arguments.set(Argument{
-						name: arg[2:],
-					})
+					arguments[arg[2:]] = Argument{}
 				}
 
-				current = Argument{}
+				name = ""
 			} else {
-				current = Argument{
-					name: arg[1:],
-				}
+				name = arg[1:]
 			}
 		} else {
-			current.Value = arg
+			arguments[name] = Argument{
+				value: arg,
+			}
 
-			arguments.set(current)
-
-			current = Argument{}
+			name = ""
 		}
 	}
 
-	if current.name != "" {
-		arguments.set(current)
+	if name != "" {
+		arguments[name] = Argument{}
 	}
 }
 
-func (a *Arguments) set(arg Argument) {
-	a.Arguments[arg.name] = arg
-}
-
-func (a *Arguments) Arg(short, long string) Argument {
-	arg, ok := a.Arguments[short]
+func get(short, long string) Argument {
+	arg, ok := arguments[short]
 
 	if !ok && long != short {
-		arg, ok = a.Arguments[long]
+		arg, ok = arguments[long]
 	}
 
 	if !ok {
 		return Argument{
-			IsNil: true,
+			isNil: true,
 		}
 	}
 
 	return arg
 }
 
-func (a *Arguments) Has(short, long string) bool {
-	return a.Arg(short, long).IsSet()
+// IsSet checks if the argument with the given short or long name is set.
+// An argument is considered set if it is present in the command line arguments,
+// even if it doesn't have a value.
+func IsSet(short, long string) bool {
+	return !get(short, long).isNil
 }
 
-func (a *Arguments) String(short, long, def string) string {
-	return a.Arg(short, long).String(def)
+// Get returns the raw value of the argument with the given short or long name.
+// If the argument is not present, an empty string is returned.
+func Get(short, long string) string {
+	return get(short, long).value
 }
 
-func (a *Arguments) Bool(short, long string, def bool) bool {
-	return a.Arg(short, long).Bool(def)
-}
-
-func (a *Arguments) Int(short, long string, def int, options ...Options[int]) int {
-	return a.Arg(short, long).Int(def, options...)
-}
-
-func (a *Arguments) Int64(short, long string, def int64, options ...Options[int64]) int64 {
-	return a.Arg(short, long).Int64(def, options...)
-}
-
-func (a *Arguments) Uint64(short, long string, def uint64, options ...Options[uint64]) uint64 {
-	return a.Arg(short, long).Uint64(def, options...)
-}
-
-func (a *Arguments) Float64(short, long string, def float64, options ...Options[float64]) float64 {
-	return a.Arg(short, long).Float64(def, options...)
+// GetAs takes an Argument and a default value of type T, and returns the value of the Argument
+// as type T. If the Argument is nil, the default value is returned. If the Argument is not nil,
+// the value is attempted to be converted to type T. If the conversion fails, an error is returned.
+// If the type is a boolean and the default value is true, then only "false" and "0" are considered
+// false. If the default value is false, then only "true" and "1" are considered true.
+// If options are provided, the value is checked to ensure it is within the range of the
+// options. If the value is not within the range, it is clamped to the closest value that
+// is within the range. (Only for integers and floats)
+func GetAs[T any](short, long string, def T, options ...Options[T]) (T, error) {
+	return convert(get(short, long), def, options...)
 }
