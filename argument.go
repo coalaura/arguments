@@ -1,6 +1,7 @@
 package arguments
 
 import (
+	"os"
 	"strconv"
 )
 
@@ -64,4 +65,17 @@ func convert[T any](a argument, def T, options ...Options[T]) T {
 	}
 
 	return value
+}
+
+func asFile(path string, flag int, perm os.FileMode, def *os.File) (*os.File, error) {
+	if path == "" {
+		return def, nil
+	}
+
+	f, err := os.OpenFile(path, flag, perm)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }
