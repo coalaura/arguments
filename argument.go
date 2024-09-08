@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-type Argument struct {
+type argument struct {
 	isNil bool
 	value string
 }
@@ -15,7 +15,7 @@ type Options[T any] struct {
 	Max T
 }
 
-func convert[T any](a Argument, def T, options ...Options[T]) (T, error) {
+func convert[T any](a argument, def T, options ...Options[T]) (T, error) {
 	var value T
 
 	if a.isNil {

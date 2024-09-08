@@ -6,12 +6,12 @@ import (
 )
 
 var (
-	arguments map[string]Argument
+	arguments map[string]argument
 )
 
 // I don't like golang flags package
 func init() {
-	arguments = make(map[string]Argument)
+	arguments = make(map[string]argument)
 
 	var (
 		arg   string
@@ -34,11 +34,11 @@ func init() {
 						val = arg[2+index+1:]
 					}
 
-					arguments[arg[2:2+index]] = Argument{
+					arguments[arg[2:2+index]] = argument{
 						value: val,
 					}
 				} else {
-					arguments[arg[2:]] = Argument{}
+					arguments[arg[2:]] = argument{}
 				}
 
 				name = ""
@@ -46,7 +46,7 @@ func init() {
 				name = arg[1:]
 			}
 		} else {
-			arguments[name] = Argument{
+			arguments[name] = argument{
 				value: arg,
 			}
 
@@ -55,11 +55,11 @@ func init() {
 	}
 
 	if name != "" {
-		arguments[name] = Argument{}
+		arguments[name] = argument{}
 	}
 }
 
-func get(short, long string) Argument {
+func get(short, long string) argument {
 	arg, ok := arguments[short]
 
 	if !ok && long != short {
@@ -67,7 +67,7 @@ func get(short, long string) Argument {
 	}
 
 	if !ok {
-		return Argument{
+		return argument{
 			isNil: true,
 		}
 	}
