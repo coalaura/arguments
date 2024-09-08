@@ -96,6 +96,21 @@ func Get(short, long string) string {
 // If options are provided, the value is checked to ensure it is within the range of the
 // options. If the value is not within the range, it is clamped to the closest value that
 // is within the range. (Only for integers and floats)
-func GetAs[T any](short, long string, def T, options ...Options[T]) (T, error) {
+func GetAs[T any](short, long string, def T, options ...Options[T]) T {
 	return convert(get(short, long), def, options...)
+}
+
+func File(short, long string, flag int, perm os.FileMode, def *os.File) (*os.File, error) {
+	path := Get(short, long)
+
+	if path == "" {
+		return def, nil
+	}
+
+	f, err := os.OpenFile(path, flag, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }
