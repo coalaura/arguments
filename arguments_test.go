@@ -13,9 +13,9 @@ func TestArguments(t *testing.T) {
 		"--output=output",
 		"-n",
 		"1234",
+		"-b",
 		"-f",
 		"123.56",
-		"-b",
 	}
 
 	Parse()

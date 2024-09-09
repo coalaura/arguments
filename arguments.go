@@ -28,6 +28,10 @@ func Parse() {
 		arg = os.Args[i]
 
 		if arg[0] == '-' && len(arg) > 1 {
+			if name != "" {
+				arguments[name] = argument{}
+			}
+
 			if arg[1] == '-' {
 				index = strings.Index(arg[2:], "=")
 
