@@ -194,7 +194,7 @@ func UIntN[T uint64 | uint32 | uint16 | uint8 | uint | uintptr](short, long stri
 		return def
 	}
 
-	v := T(i)
+	v := T(u)
 
 	if len(options) > 0 {
 		min := options[0].Min
@@ -237,7 +237,7 @@ func FloatN[T float64 | float32](short, long string, def T, options ...Options[T
 		return def
 	}
 
-	v := T(i)
+	v := T(f)
 
 	if len(options) > 0 {
 		min := options[0].Min
