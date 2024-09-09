@@ -147,7 +147,22 @@ func IntN[T int64 | int32 | int16 | int8 | int](short, long string, def T, optio
 		return def
 	}
 
-	return T(i)
+	v := T(i)
+
+	if len(options) > 0 {
+		min := options[0].Min
+		max := options[0].Max
+
+		if v < min {
+			return min
+		}
+
+		if v > max {
+			return max
+		}
+	}
+
+	return v
 }
 
 // UIntN returns the value of the unsigned integer argument with the given short or long name.
@@ -179,7 +194,22 @@ func UIntN[T uint64 | uint32 | uint16 | uint8 | uint | uintptr](short, long stri
 		return def
 	}
 
-	return T(u)
+	v := T(i)
+
+	if len(options) > 0 {
+		min := options[0].Min
+		max := options[0].Max
+
+		if v < min {
+			return min
+		}
+
+		if v > max {
+			return max
+		}
+	}
+
+	return v
 }
 
 // FloatN returns the value of the float argument with the given short or long name.
@@ -207,7 +237,22 @@ func FloatN[T float64 | float32](short, long string, def T, options ...Options[T
 		return def
 	}
 
-	return T(f)
+	v := T(i)
+
+	if len(options) > 0 {
+		min := options[0].Min
+		max := options[0].Max
+
+		if v < min {
+			return min
+		}
+
+		if v > max {
+			return max
+		}
+	}
+
+	return v
 }
 
 // NamedFile opens a file with the name of the argument given by the short or long name.
