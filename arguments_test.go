@@ -8,30 +8,41 @@ import (
 func TestArguments(t *testing.T) {
 	os.Args = []string{
 		"arguments.exe",
-		"-u",
-		"out.lar",
-		"-v",
-		"test",
+		"-i",
+		"input",
+		"--output=output",
+		"-n",
+		"1234",
+		"-f",
+		"123.56",
+		"-b",
 	}
 
-	Parse("u", "v")
+	Parse()
 
-	if !GetNamedAs("u", "unpack", false) {
-		t.Error("unpack flag should be true")
+	i := String("i", "input", "")
+	o := String("o", "output", "")
+	n := IntN("n", "number", 0)
+	f := FloatN("f", "float", 0.0)
+	b := Bool("b", "bool", false)
+
+	if i != "input" {
+		t.Errorf("expected 'input', got '%s'", i)
 	}
 
-	if !GetNamedAs("v", "verbose", false) {
-		t.Error("verbose flag should be true")
+	if o != "output" {
+		t.Errorf("expected 'output', got '%s'", o)
 	}
 
-	first := GetUnnamedAs(0, "")
-	second := GetUnnamedAs(1, "")
-
-	if first != "out.lar" {
-		t.Errorf("first unnamed argument should be out.lar, got '%s'", first)
+	if n != 1234 {
+		t.Errorf("expected 1234, got '%d'", n)
 	}
 
-	if second != "test" {
-		t.Errorf("second unnamed argument should be test, got '%s'", second)
+	if f != 123.56 {
+		t.Errorf("expected 123.56, got '%f'", f)
+	}
+
+	if !b {
+		t.Errorf("expected true, got '%t'", b)
 	}
 }

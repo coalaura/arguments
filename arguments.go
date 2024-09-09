@@ -2,22 +2,20 @@ package arguments
 
 import (
 	"os"
+	"strconv"
 	"strings"
 )
 
 var (
 	arguments map[string]argument
-	noName    []argument
 )
 
-func Parse(booleans ...string) {
-	arguments = make(map[string]argument)
-	noName = make([]argument, 0)
+func init() {
+	Parse()
+}
 
-	isBool := make(map[string]bool)
-	for _, b := range booleans {
-		isBool[b] = true
-	}
+func Parse() {
+	arguments = make(map[string]argument)
 
 	var (
 		arg   string
@@ -40,8 +38,14 @@ func Parse(booleans ...string) {
 						val = arg[2+index+1:]
 					}
 
-					arguments[arg[2:2+index]] = argument{
-						value: val,
+					name = arg[2 : 2+index]
+
+					if name != "" {
+						arguments[name] = argument{
+							value: val,
+						}
+
+						name = ""
 					}
 				} else {
 					arguments[arg[2:]] = argument{}
@@ -50,24 +54,10 @@ func Parse(booleans ...string) {
 				name = ""
 			} else {
 				name = arg[1:]
-
-				if _, ok := isBool[name]; ok {
-					arguments[name] = argument{}
-
-					name = ""
-				}
 			}
-		} else {
-			if name == "" {
-				if arg != "" {
-					noName = append(noName, argument{
-						value: arg,
-					})
-				}
-			} else {
-				arguments[name] = argument{
-					value: arg,
-				}
+		} else if name != "" {
+			arguments[name] = argument{
+				value: arg,
 			}
 
 			name = ""
@@ -79,7 +69,7 @@ func Parse(booleans ...string) {
 	}
 }
 
-func getNamed(short, long string) argument {
+func get(short, long string) argument {
 	arg, ok := arguments[short]
 
 	if !ok && long != short {
@@ -95,75 +85,135 @@ func getNamed(short, long string) argument {
 	return arg
 }
 
-func getUnnamed(index int) argument {
-	if index < 0 || index >= len(noName) {
-		return argument{
-			isNil: true,
-		}
-	}
-
-	return noName[index]
-}
-
 // IsNamedSet checks if the argument with the given short or long name is set.
 // An argument is considered set if it is present in the command line arguments,
 // even if it doesn't have a value.
-func IsNamedSet(short, long string) bool {
-	return !getNamed(short, long).isNil
+func IsSet(short, long string) bool {
+	return !get(short, long).isNil
 }
 
-// IsUnnamedSet checks if the unnamed argument with the given index is set.
-// An unnamed argument is considered set if it is present in the command line arguments,
-// even if it doesn't have a value.
-func IsUnnamedSet(index int) bool {
-	return !getUnnamed(index).isNil
+// String returns the value of the string argument with the given short or long name.
+// If the argument is not present, the default value is returned.
+func String(short, long, def string) string {
+	arg := get(short, long)
+
+	if arg.isNil {
+		return def
+	}
+
+	return arg.value
 }
 
-// Get returns the raw value of the argument with the given short or long name.
-// If the argument is not present, an empty string is returned.
-func GetNamed(short, long string) string {
-	return getNamed(short, long).value
+// Bool returns the value of the boolean argument with the given short or long name.
+// If the argument is not present, the default value is returned.
+// The function considers the argument to be true if it is present and its value is
+// not "false" or "0".
+func Bool(short, long string, def bool) bool {
+	arg := get(short, long)
+
+	if arg.isNil {
+		return def
+	}
+
+	return arg.value != "false" && arg.value != "0"
 }
 
-// GetUnnamed returns the raw value of the unnamed argument with the given index.
-// If the argument is not present, an empty string is returned.
-func GetUnnamed(index int) string {
-	return getUnnamed(index).value
+// IntN returns the value of the integer argument with the given short or long name.
+// If the argument is not present, the default value is returned.
+// The function supports the following types: int64, int32, int16, int8, int.
+// The function will return the default value if the argument is not a valid integer.
+func IntN[T int64 | int32 | int16 | int8 | int](short, long string, def T, options ...Options[T]) T {
+	val := get(short, long).value
+
+	if val == "" {
+		return def
+	}
+
+	var bits int
+
+	switch any(def).(type) {
+	case int64, int:
+		bits = 64
+	case int32:
+		bits = 32
+	case int16:
+		bits = 16
+	case int8:
+		bits = 8
+	}
+
+	i, err := strconv.ParseInt(val, 10, bits)
+	if err != nil {
+		return def
+	}
+
+	return T(i)
 }
 
-// GetNamedAs takes an arguments short and long name and a default value of type T, and returns the
-// value of the argument as type T. If the argument is not present, the default value is returned.
-// If the type is a boolean then only "false" or "0" are considered false.
-// If options are provided, the value is checked to ensure it is within the range of the
-// options. If the value is not within the range, it is clamped to the closest value that
-// is within the range. (Only for integers and floats)
-func GetNamedAs[T any](short, long string, def T, options ...Options[T]) T {
-	return convert(getNamed(short, long), def, options...)
+// UIntN returns the value of the unsigned integer argument with the given short or long name.
+// If the argument is not present, the default value is returned.
+// The function supports the following types: uint64, uint32, uint16, uint8, uint, uintptr.
+// The function will return the default value if the argument is not a valid unsigned integer.
+func UIntN[T uint64 | uint32 | uint16 | uint8 | uint | uintptr](short, long string, def T, options ...Options[T]) T {
+	val := get(short, long).value
+
+	if val == "" {
+		return def
+	}
+
+	var bits int
+
+	switch any(def).(type) {
+	case uint64, uint, uintptr:
+		bits = 64
+	case uint32:
+		bits = 32
+	case uint16:
+		bits = 16
+	case uint8:
+		bits = 8
+	}
+
+	u, err := strconv.ParseUint(val, 10, bits)
+	if err != nil {
+		return def
+	}
+
+	return T(u)
 }
 
-// GetUnnamedAs takes an index and a default value of type T, and returns the value of the
-// unnamed argument at that index as type T. If the argument is not present, the default
-// value is returned.
-// If the type is a boolean then only "false" or "0" are considered false.
-// If options are provided, the value is checked to ensure it is within the range of the
-// options. If the value is not within the range, it is clamped to the closest value that
-// is within the range. (Only for integers and floats)
-func GetUnnamedAs[T any](index int, def T, options ...Options[T]) T {
-	return convert(getUnnamed(index), def, options...)
+// FloatN returns the value of the float argument with the given short or long name.
+// If the argument is not present, the default value is returned.
+// The function supports the following types: float64, float32.
+// The function will return the default value if the argument is not a valid float.
+func FloatN[T float64 | float32](short, long string, def T, options ...Options[T]) T {
+	val := get(short, long).value
+
+	if val == "" {
+		return def
+	}
+
+	var bits int
+
+	switch any(def).(type) {
+	case float64:
+		bits = 64
+	case float32:
+		bits = 32
+	}
+
+	f, err := strconv.ParseFloat(val, bits)
+	if err != nil {
+		return def
+	}
+
+	return T(f)
 }
 
 // NamedFile opens a file with the name of the argument given by the short or long name.
 // If the argument is not present, the default file is returned.
 // The file is opened with the given flags and permissions.
 // If the file cannot be opened, an error is returned.
-func NamedFile(short, long string, flag int, perm os.FileMode, def *os.File) (*os.File, error) {
-	return asFile(GetNamed(short, long), flag, perm, def)
-}
-
-// UnnamedFile opens a file at the given index.
-// If the argument is not present, the default file is returned.
-// The file is opened with the given flags and permissions.
-// If the file cannot be opened, an error is returned.
-func UnnamedFile(index int, flag int, perm os.FileMode, def *os.File) (*os.File, error) {
-	return asFile(GetUnnamed(index), flag, perm, def)
+func File(short, long string, flag int, perm os.FileMode, def *os.File) (*os.File, error) {
+	return asFile(get(short, long).value, flag, perm, def)
 }
