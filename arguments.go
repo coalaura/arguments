@@ -58,6 +58,14 @@ func Parse() {
 				name = ""
 			} else {
 				name = arg[1:]
+
+				if len(name) > 1 {
+					for _, char := range name {
+						arguments[string(char)] = argument{}
+					}
+
+					name = ""
+				}
 			}
 		} else if name != "" {
 			arguments[name] = argument{
