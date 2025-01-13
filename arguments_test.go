@@ -21,6 +21,7 @@ func TestArguments(t *testing.T) {
 		"two",
 		"-f",
 		"123.56",
+		"-p",
 	}
 
 	var (
@@ -41,7 +42,7 @@ func TestArguments(t *testing.T) {
 	Register("bool2", 'c', &boolean2).WithHelp("Boolean thats false")
 	Register("float", 'f', &float).WithHelp("Floaty thingy")
 
-	Parse()
+	MustParse()
 
 	ShowHelp(true)
 

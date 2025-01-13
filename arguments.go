@@ -1,6 +1,7 @@
 package arguments
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -67,9 +68,9 @@ func Register[V value](long string, short rune, value *V) *holder[V] {
 }
 
 // Parse parses the command line arguments and sets the values of the arguments (can only be called once)
-func Parse() {
+func Parse() error {
 	if !parsed.CompareAndSwap(0, 1) {
-		return
+		return errors.New("arguments already parsed")
 	}
 
 	var (
@@ -120,7 +121,26 @@ func Parse() {
 		}
 	}
 
+	if name != 0 {
+		arguments.short(name, "")
+	}
+
 	if arguments.help != nil && *arguments.help.value {
 		ShowHelpAndExit(arguments.colored)
+	}
+
+	if arguments.invalid != "" {
+		return fmt.Errorf("invalid argument: %s", arguments.invalid)
+	}
+
+	return nil
+}
+
+// MustParse parses the command line arguments and sets the values of the arguments, it will print an error message and exit if an error occurs
+func MustParse() {
+	if err := Parse(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+
+		os.Exit(1)
 	}
 }

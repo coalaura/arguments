@@ -1,6 +1,7 @@
 package arguments
 
 import (
+	"fmt"
 	"unsafe"
 )
 
@@ -25,6 +26,8 @@ type container struct {
 	colored bool
 	help    *holder[bool]
 
+	invalid string
+
 	list   []setter
 	shorts map[rune]setter
 	longs  map[string]setter
@@ -46,6 +49,8 @@ func (h *holder[V]) set(value string) {
 func (c *container) short(short rune, value string) {
 	arg, ok := c.shorts[short]
 	if !ok {
+		c.invalid = fmt.Sprintf("-%c", short)
+
 		return
 	}
 
@@ -55,6 +60,8 @@ func (c *container) short(short rune, value string) {
 func (c *container) long(long string, value string) {
 	arg, ok := c.longs[long]
 	if !ok {
+		c.invalid = fmt.Sprintf("--%s", long)
+
 		return
 	}
 
