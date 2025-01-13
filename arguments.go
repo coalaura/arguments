@@ -1,6 +1,7 @@
 package arguments
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"sync/atomic"
@@ -10,29 +11,62 @@ var (
 	parsed atomic.Int32
 
 	arguments = container{
-		short: make(map[string]setter),
-		long:  make(map[string]setter),
+		shorts: make(map[rune]setter),
+		longs:  make(map[string]setter),
 	}
 
 	// Args contains the remaining unnamed arguments
 	Args []string
 )
 
-func Register[V value](long, short string, value *V, def ...V) {
+// RegisterHelp registers the help argument (-h or --help) which will display the help for all arguments after parsing and then exit
+func RegisterHelp(colored bool, text ...string) {
+	if colored {
+		arguments.colored = true
+	}
+
+	var value bool
+	arguments.help = Register("help", 'h', &value)
+
+	if len(text) > 0 {
+		arguments.help.WithHelp(text[0])
+	}
+}
+
+// Register registers an argument with the given short and long names and value pointer
+func Register[V value](long string, short rune, value *V) *holder[V] {
+	if short == 0 && long == "" {
+		panic("either short or long name must be set")
+	}
+
 	arg := &holder[V]{
 		long:  long,
-		short: short,
+		short: string(short),
 		value: value,
 	}
 
-	if len(def) > 0 {
-		*value = def[0]
+	arguments.list = append(arguments.list, arg)
+
+	if short != 0 {
+		if _, ok := arguments.shorts[short]; ok {
+			panic(fmt.Sprintf("argument '-%c' already registered", short))
+		}
+
+		arguments.shorts[short] = arg
 	}
 
-	arguments.short[short] = arg
-	arguments.long[long] = arg
+	if long != "" {
+		if _, ok := arguments.longs[long]; ok {
+			panic(fmt.Sprintf("argument '--%s' already registered", long))
+		}
+
+		arguments.longs[long] = arg
+	}
+
+	return arg
 }
 
+// Parse parses the command line arguments and sets the values of the arguments (can only be called once)
 func Parse() {
 	if !parsed.CompareAndSwap(0, 1) {
 		return
@@ -45,16 +79,20 @@ func Parse() {
 
 	for _, arg := range os.Args[1:] {
 		if arg[0] == '-' {
-			name = 0
+			if name != 0 {
+				arguments.short(name, "")
+
+				name = 0
+			}
 
 			// --argument=value
 			if len(arg) > 1 && arg[1] == '-' {
 				index = strings.Index(arg, "=")
 
 				if index == -1 {
-					arguments.SetLong(arg[2:], "")
+					arguments.long(arg[2:], "")
 				} else {
-					arguments.SetLong(arg[2:index], arg[index+1:])
+					arguments.long(arg[2:index], arg[index+1:])
 				}
 
 				continue
@@ -68,17 +106,21 @@ func Parse() {
 
 				// -abcdefg
 				if x > 0 && name != 0 {
-					arguments.SetShort(string(name), "")
+					arguments.short(name, "")
 				}
 
 				name = rn
 			}
 		} else if name != 0 {
-			arguments.SetShort(string(name), arg)
+			arguments.short(name, arg)
 
 			name = 0
 		} else {
 			Args = append(Args, arg)
 		}
+	}
+
+	if arguments.help != nil && *arguments.help.value {
+		ShowHelpAndExit(arguments.colored)
 	}
 }

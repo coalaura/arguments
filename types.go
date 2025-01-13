@@ -9,21 +9,28 @@ type value interface {
 }
 
 type setter interface {
-	Set(string)
+	set(string)
+	write(*builder)
 }
 
 type holder[V any] struct {
+	text string
+
 	long  string
 	short string
 	value *V
 }
 
 type container struct {
-	short map[string]setter
-	long  map[string]setter
+	colored bool
+	help    *holder[bool]
+
+	list   []setter
+	shorts map[rune]setter
+	longs  map[string]setter
 }
 
-func (h *holder[V]) Set(value string) {
+func (h *holder[V]) set(value string) {
 	if value == "" {
 		// Special handling for bool type
 		if _, ok := any(*h.value).(bool); ok {
@@ -36,20 +43,20 @@ func (h *holder[V]) Set(value string) {
 	*h.value = as(value, *h.value)
 }
 
-func (c *container) SetShort(short string, value string) {
-	arg, ok := c.short[short]
+func (c *container) short(short rune, value string) {
+	arg, ok := c.shorts[short]
 	if !ok {
 		return
 	}
 
-	arg.Set(value)
+	arg.set(value)
 }
 
-func (c *container) SetLong(long string, value string) {
-	arg, ok := c.long[long]
+func (c *container) long(long string, value string) {
+	arg, ok := c.longs[long]
 	if !ok {
 		return
 	}
 
-	arg.Set(value)
+	arg.set(value)
 }

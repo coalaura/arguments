@@ -33,15 +33,17 @@ func TestArguments(t *testing.T) {
 		float    float64
 	)
 
-	Register("input", "i", &input)
-	Register("output", "o", &output)
-	Register("name", "n", &number)
-	Register("args", "a", &args)
-	Register("bool", "b", &boolean)
-	Register("bool2", "c", &boolean2)
-	Register("float", "f", &float)
+	Register("input", 'i', &input).WithHelp("The input file")
+	Register("output", 0, &output).WithHelp("The output file")
+	Register("number", 'n', &number).WithHelp("Number of things")
+	Register("args", 'a', &args).WithHelp("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus.")
+	Register("bool", 'b', &boolean).WithHelp("Boolean thats true")
+	Register("bool2", 'c', &boolean2).WithHelp("Boolean thats false")
+	Register("float", 'f', &float).WithHelp("Floaty thingy")
 
 	Parse()
+
+	ShowHelp(true)
 
 	assertEqual(t, input, "input")
 	assertEqual(t, output, "output")
