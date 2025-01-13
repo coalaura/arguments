@@ -11,38 +11,71 @@ func TestArguments(t *testing.T) {
 		"-i",
 		"input",
 		"--output=output",
+		"-a",
+		"1,3,4,2",
+		"one",
 		"-n",
 		"1234",
-		"-b",
+		"-bc",
+		"0",
+		"two",
 		"-f",
 		"123.56",
 	}
 
+	var (
+		input    string
+		output   string
+		args     []uint16
+		number   uint32
+		boolean  bool
+		boolean2 bool
+		float    float64
+	)
+
+	Register("input", "i", &input)
+	Register("output", "o", &output)
+	Register("name", "n", &number)
+	Register("args", "a", &args)
+	Register("bool", "b", &boolean)
+	Register("bool2", "c", &boolean2)
+	Register("float", "f", &float)
+
 	Parse()
 
-	i := String("i", "input", "")
-	o := String("o", "output", "")
-	n := IntN("n", "number", 0)
-	f := FloatN("f", "float", 0.0)
-	b := Bool("b", "bool", false)
+	assertEqual(t, input, "input")
+	assertEqual(t, output, "output")
+	assertEqual(t, number, 1234)
+	assertEqual(t, boolean, true)
+	assertEqual(t, boolean2, false)
+	assertEqual(t, float, 123.56)
 
-	if i != "input" {
-		t.Errorf("expected 'input', got '%s'", i)
+	assertSliceEqual(t, args, []uint16{1, 3, 4, 2})
+	assertSliceEqual(t, Args, []string{"one", "two"})
+}
+
+func assertEqual[V comparable](t *testing.T, actual, expected V) {
+	if actual == expected {
+		t.Logf("expected: %#v == %#v", expected, actual)
+	} else {
+		t.Errorf("expected: %#v != %#v", expected, actual)
+	}
+}
+
+func assertSliceEqual[V comparable](t *testing.T, actual, expected []V) {
+	if len(actual) != len(expected) {
+		t.Errorf("expected: %#v != %#v", expected, actual)
+
+		return
 	}
 
-	if o != "output" {
-		t.Errorf("expected 'output', got '%s'", o)
+	for i, v := range actual {
+		if v != expected[i] {
+			t.Errorf("expected: %#v != %#v", expected, actual)
+
+			return
+		}
 	}
 
-	if n != 1234 {
-		t.Errorf("expected 1234, got '%d'", n)
-	}
-
-	if f != 123.56 {
-		t.Errorf("expected 123.56, got '%f'", f)
-	}
-
-	if !b {
-		t.Errorf("expected true, got '%t'", b)
-	}
+	t.Logf("expected: %#v == %#v", expected, actual)
 }
