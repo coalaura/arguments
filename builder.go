@@ -2,12 +2,19 @@ package arguments
 
 import "strings"
 
-type builder struct {
-	colored bool
+type Builder struct {
 	strings.Builder
+	colored bool
 }
 
-func (b *builder) mute() {
+// NewBuilder creates a new colored string builder
+func NewBuilder(colored bool) *Builder {
+	return &Builder{
+		colored: colored,
+	}
+}
+
+func (b *Builder) mute() {
 	if !b.colored {
 		return
 	}
@@ -15,7 +22,7 @@ func (b *builder) mute() {
 	b.WriteString("\033[38;5;248m")
 }
 
-func (b *builder) text() {
+func (b *Builder) text() {
 	if !b.colored {
 		return
 	}
@@ -23,7 +30,7 @@ func (b *builder) text() {
 	b.WriteString("\033[3m\033[38;5;248m")
 }
 
-func (b *builder) name() {
+func (b *Builder) name() {
 	if !b.colored {
 		return
 	}
@@ -31,7 +38,7 @@ func (b *builder) name() {
 	b.WriteString("\033[38;5;153m")
 }
 
-func (b *builder) value() {
+func (b *Builder) value() {
 	if !b.colored {
 		return
 	}
@@ -39,7 +46,7 @@ func (b *builder) value() {
 	b.WriteString("\033[38;5;108m")
 }
 
-func (b *builder) reset() {
+func (b *Builder) reset() {
 	if !b.colored {
 		return
 	}

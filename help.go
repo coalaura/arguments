@@ -45,7 +45,7 @@ func (h *holder[V]) WithHelp(text string) {
 	h.text = b.String()
 }
 
-func (h *holder[V]) write(b *builder) {
+func (h *holder[V]) write(b *Builder) {
 	typeName := fmt.Sprintf("%T", *h.value)
 	isBoolean := typeName == "bool"
 
@@ -99,14 +99,14 @@ func (h *holder[V]) write(b *builder) {
 
 // ShowHelp displays the help for all arguments
 func ShowHelp(colored bool) {
-	help := builder{colored: colored}
+	help := NewBuilder(colored)
 
 	for _, arg := range arguments.list {
 		if help.Len() > 0 {
 			help.WriteString("\n")
 		}
 
-		arg.write(&help)
+		arg.write(help)
 	}
 
 	fmt.Println(help.String())

@@ -11,7 +11,7 @@ type value interface {
 
 type setter interface {
 	set(string)
-	write(*builder)
+	write(*Builder)
 }
 
 type holder[V any] struct {
