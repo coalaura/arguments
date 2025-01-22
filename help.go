@@ -50,22 +50,22 @@ func (h *holder[V]) write(b *Builder) {
 	isBoolean := typeName == "bool"
 
 	if h.short != "\x00" {
-		b.mute()
+		b.Mute()
 		b.WriteString(" -")
 
-		b.name()
+		b.Name()
 		b.WriteString(h.short)
 
 		if !isBoolean {
 			b.WriteRune(' ')
 
-			b.value()
+			b.Value()
 			b.WriteString(typeName)
 		}
 	}
 
 	if h.long != "" {
-		b.mute()
+		b.Mute()
 
 		if h.short != "\x00" {
 			b.WriteRune(',')
@@ -73,20 +73,20 @@ func (h *holder[V]) write(b *Builder) {
 
 		b.WriteString(" --")
 
-		b.name()
+		b.Name()
 		b.WriteString(h.long)
 
 		if !isBoolean {
-			b.mute()
+			b.Mute()
 			b.WriteRune('=')
 
-			b.value()
+			b.Value()
 			b.WriteString(typeName)
 		}
 	}
 
 	if h.text != "" {
-		b.text()
+		b.Text()
 
 		b.WriteRune('\n')
 		b.WriteString(indent)
@@ -94,7 +94,7 @@ func (h *holder[V]) write(b *Builder) {
 		b.WriteString(h.text)
 	}
 
-	b.reset()
+	b.Reset()
 }
 
 // ShowHelp displays the help for all arguments
